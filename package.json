@@ -77,7 +77,8 @@
     "drizzle-orm": "^0.45.0",
     "better-sqlite3": "^13.1.0",
     "@electric-sql/pglite": "^0.5.16",
-    "miniflare": "^4.20260730.0"
+    "miniflare": "^4.20260730.0",
+    "esbuild": "^0.27.7"
   },
   "publishConfig": {
     "access": "public",

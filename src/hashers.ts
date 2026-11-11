@@ -9,16 +9,15 @@ import { pbkdf2Js } from './utils/sha'
 export const UNUSABLE_PASSWORD_PREFIX = '!'
 export const UNUSABLE_PASSWORD_SUFFIX_LENGTH = 40
 
-/** Cloudflare Workers reject PBKDF2 above this iteration count; Ghuri falls back to a pure-JS PBKDF2. */
+/**
+ * Cloudflare's WebCrypto has rejected PBKDF2 above this iteration count (production Workers); Ghuri then
+ * falls back to a pure-JS PBKDF2.
+ */
 export const WORKERS_PBKDF2_MAX_ITERATIONS = 100_000
-
-function isWorkers(): boolean {
-  return (globalThis as any).navigator?.userAgent === 'Cloudflare-Workers'
-}
 
 /**
  * PBKDF2-HMAC. Uses WebCrypto, falling back to a pure-JS implementation when WebCrypto refuses the
- * parameters (Workers: > 100,000 iterations; empty passwords on some runtimes).
+ * parameters (Workers' iteration cap; empty passwords on some runtimes).
  */
 export async function pbkdf2(
   password: string | Uint8Array,
@@ -29,7 +28,7 @@ export async function pbkdf2(
 ): Promise<Uint8Array> {
   const pw = typeof password === 'string' ? utf8(password) : password
   const s = typeof salt === 'string' ? utf8(salt) : salt
-  if (!(isWorkers() && iterations > WORKERS_PBKDF2_MAX_ITERATIONS) && pw.length > 0) {
+  if (pw.length > 0) {
     try {
       const key = await crypto.subtle.importKey('raw', pw as Uint8Array<ArrayBuffer>, 'PBKDF2', false, [
         'deriveBits',

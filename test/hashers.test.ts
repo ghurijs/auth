@@ -60,15 +60,18 @@ describe('Django compatibility', () => {
     }
   })
 
-  it('uses the JS PBKDF2 on Workers above 100k iterations', async () => {
-    vi.stubGlobal('navigator', { userAgent: 'Cloudflare-Workers' })
-    const spy = vi.spyOn(crypto.subtle, 'deriveBits')
+  it('falls back to the JS PBKDF2 when WebCrypto refuses the iteration count (Workers)', async () => {
+    const spy = vi
+      .spyOn(crypto.subtle, 'deriveBits')
+      .mockRejectedValue(
+        new DOMException('iteration counts above 100000 are not supported', 'NotSupportedError'),
+      )
     try {
       expect(await checkPassword(PASSWORD, DJANGO_PBKDF2_1M)).toBe(true)
-      expect(spy).not.toHaveBeenCalled()
+      expect(await checkPassword('nope', DJANGO_PBKDF2_1M)).toBe(false)
+      expect(spy).toHaveBeenCalled()
     } finally {
       spy.mockRestore()
-      vi.unstubAllGlobals()
     }
   })
 })

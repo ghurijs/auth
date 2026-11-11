@@ -150,12 +150,13 @@ await checkPassword('s3cret', encoded, async (pw) => { /* re-hash: outdated algo
 await makePassword(null)                                      // unusable password ('!' + 40 chars)
 ```
 
-**Iterations and Workers CPU.** Django uses 1,000,000 PBKDF2 iterations. Cloudflare Workers' WebCrypto
-refuses more than 100,000 and the free plan allows ~10 ms of CPU per request, so Ghuri defaults to
+**Iterations and Workers CPU.** Django uses 1,000,000 PBKDF2 iterations. Production Workers' WebCrypto has
+refused more than 100,000 and the free plan allows ~10 ms of CPU per request, so Ghuri defaults to
 **100,000** (~25–50 ms of CPU: fine on the paid plan, may hit the free plan's limit — lower it there, or raise
-it on Node where there is no such limit). Higher counts still verify on Workers through a pure-JS PBKDF2
-(1,000,000 iterations ≈ 0.7 s of CPU — paid plan only), and `user.checkPassword()` transparently re-hashes
-with the configured parameters on the next successful login, exactly like Django's hasher upgrades.
+it on Node where there is no such limit). When WebCrypto refuses a count, Ghuri falls back to a pure-JS
+PBKDF2 (1,000,000 iterations ≈ 0.7 s of CPU — paid plan only), so Django hashes always verify, and
+`user.checkPassword()` transparently re-hashes with the configured parameters on the next successful login,
+exactly like Django's hasher upgrades.
 
 Validation — `AUTH_PASSWORD_VALIDATORS` (empty by default, like Django):
 
