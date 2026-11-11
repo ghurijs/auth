@@ -77,7 +77,9 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
 
     const admin = await User.objects.createSuperuser('admin', 'a@b.c', 'pw')
     expect(admin.isStaff && admin.isSuperuser).toBe(true)
-    await expect(User.objects.createSuperuser('x', null, 'pw', { isStaff: false })).rejects.toThrow(/isStaff=true/)
+    await expect(User.objects.createSuperuser('x', null, 'pw', { isStaff: false })).rejects.toThrow(
+      /isStaff=true/,
+    )
     await expect(User.objects.createUser('', null, 'pw')).rejects.toThrow(/must be set/)
     expect((await User.objects.getByNaturalKey('ann')).pk).toBe(u.pk)
     expect(User.normalizeUsername('ｕｓｅｒ')).toBe('user')
@@ -104,7 +106,10 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
     expect(ct.name).toBe('user')
     expect(await ContentType.objects.getForModel(new User())).toBe(ct)
     expect((await ContentType.objects.getForId(ct.pk)).pk).toBe(ct.pk)
-    const codenames = await Permission.objects.filter({ contentType: ct }).orderBy('codename').valuesList('codename', { flat: true })
+    const codenames = await Permission.objects
+      .filter({ contentType: ct })
+      .orderBy('codename')
+      .valuesList('codename', { flat: true })
     expect(codenames).toEqual(['add_user', 'change_user', 'delete_user', 'view_user'])
     const p = await Permission.objects.getByNaturalKey('add_user', 'auth', 'user')
     expect(p.name).toBe('Can add user')
@@ -148,7 +153,10 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
     expect(await root.hasPerm('anything.at_all')).toBe(true)
     expect((await root.getAllPermissions()).has('auth.delete_user')).toBe(true)
 
-    const holders = await User.objects.withPerm('auth.view_group').orderBy('username').valuesList('username', { flat: true })
+    const holders = await User.objects
+      .withPerm('auth.view_group')
+      .orderBy('username')
+      .valuesList('username', { flat: true })
     expect(holders).toEqual(['ann', 'root'])
     expect(await User.objects.withPerm('auth.view_group', { includeSuperusers: false }).count()).toBe(1)
     expect((await editors.userSet.all()).map((x: any) => x.username)).toEqual(['ann'])
@@ -173,7 +181,9 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
       u.isActive = false
       await u.save()
       expect(await authenticate(undefined, { username: 'ann', password: 'pw' })).toBeNull()
-      expect(await new AllowAllUsersModelBackend().authenticate(undefined, { username: 'ann', password: 'pw' })).toBeTruthy()
+      expect(
+        await new AllowAllUsersModelBackend().authenticate(undefined, { username: 'ann', password: 'pw' }),
+      ).toBeTruthy()
       expect(await new ModelBackend().getUser(u.pk)).toBeNull()
     } finally {
       userLoginFailed.disconnect(rec)

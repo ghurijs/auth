@@ -8,6 +8,7 @@ import {
   EmailField,
   ForeignKey,
   Manager,
+  type ManyRelatedManager,
   ManyToManyField,
   Model,
   type ModelClass,
@@ -41,6 +42,10 @@ export class Permission extends Model({
     ordering: ['contentType__appLabel', 'contentType__model', 'codename'],
   }
   static objects = new PermissionManager()
+  /** Users having this permission directly (reverse of `userPermissions`). */
+  declare userSet: ManyRelatedManager<any>
+  /** Groups having this permission (reverse of `Group.permissions`). */
+  declare groupSet: ManyRelatedManager<Group>
 
   naturalKey(): [string, string, string] | [string] {
     const ct = this._state.fieldsCache.get('contentType') as ContentType | undefined
@@ -66,6 +71,8 @@ export class Group extends Model({
 }) {
   static Meta = { verboseName: 'group', verboseNamePlural: 'groups' }
   static objects = new GroupManager()
+  /** Users in this group (reverse of `groups`). */
+  declare userSet: ManyRelatedManager<any>
 
   naturalKey(): [string] {
     return [this.name]

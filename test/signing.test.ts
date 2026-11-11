@@ -16,8 +16,10 @@ import { bareContext, SECRET } from './helpers'
 const PY = {
   signer: 'hello:FRBs_KKrjaVe9zJEdlQdiuJ2n9jBEsFOL1Capquoa18',
   signerSalt: 'hello:qAgCjjlkcBHGqy4A6qV17FI-b_DEPSKILcwx8OoRano',
-  dumps: 'eyJhIjoxLCJcdTAwZTkiOiJcdTAwZmMiLCJsaXN0IjpbMSwyLDNdfQ:1xRG2i:WaogW8pg1bIXXCoVYkHmDU46i378JwWUvZlx9z683Io',
-  dumpsCompressed: '.eJyrVipJrShRslKqGCZASUcpT8kqrzQnR0cJ6K-SotLUWgDnW2bx:1xRG2i:kilY_xByTNl2l1ZGg1usWd3LP5hjXR3LGRt4qzNTFYM',
+  dumps:
+    'eyJhIjoxLCJcdTAwZTkiOiJcdTAwZmMiLCJsaXN0IjpbMSwyLDNdfQ:1xRG2i:WaogW8pg1bIXXCoVYkHmDU46i378JwWUvZlx9z683Io',
+  dumpsCompressed:
+    '.eJyrVipJrShRslKqGCZASUcpT8kqrzQnR0cJ6K-SotLUWgDnW2bx:1xRG2i:kilY_xByTNl2l1ZGg1usWd3LP5hjXR3LGRt4qzNTFYM',
   session: 'eyJfYXV0aF91c2VyX2lkIjoiMSIsImZvbyI6ImJhciJ9:1xRG2i:it0oql3zz6MNrPCQPdhtUiOgYikAbUvsTJdsVuIZolw',
   reset: 'bkrfgg-08670e46f1586596443335a4c8a3bb34',
   resetNoLogin: 'bkrfgg-4d4757bf90a4afdc260ec443d68d9c8f',
@@ -36,7 +38,11 @@ describe('signing (Django-compatible)', () => {
 
   it('loads values made by Django dumps() (plain, compressed, sessions)', async () => {
     expect(await loads(PY.dumps, { key: 'secret' })).toEqual({ a: 1, é: 'ü', list: [1, 2, 3] })
-    expect(await loads(PY.dumpsCompressed, { key: 'secret' })).toEqual({ text: 'x'.repeat(200), n: null, t: true })
+    expect(await loads(PY.dumpsCompressed, { key: 'secret' })).toEqual({
+      text: 'x'.repeat(200),
+      n: null,
+      t: true,
+    })
     expect(await loads(PY.session, { key: 'secret', salt: 'django.contrib.sessions.SessionStore' })).toEqual({
       _auth_user_id: '1',
       foo: 'bar',

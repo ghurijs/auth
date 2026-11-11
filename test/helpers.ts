@@ -1,7 +1,7 @@
 import {
+  CsrfMiddleware,
   createApp,
   createContext,
-  CsrfMiddleware,
   defineSettings,
   type Env,
   type GhuriSettings,
@@ -43,7 +43,13 @@ export function memoryKV() {
   }
 }
 
-export const ALL_APPS = [ContentTypesConfig, AuthConfig, SessionsConfig, AuthTokenConfig, TokenBlacklistConfig]
+export const ALL_APPS = [
+  ContentTypesConfig,
+  AuthConfig,
+  SessionsConfig,
+  AuthTokenConfig,
+  TokenBlacklistConfig,
+]
 
 export interface AuthAppOptions {
   using?: TestBackend

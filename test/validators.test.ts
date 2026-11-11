@@ -55,14 +55,18 @@ describe('password validators', () => {
       email: 'testclient@example.com',
       firstName: 'Test',
       lastName: 'Client',
-      constructor: { _meta: { getField: (n: string) => ({ verboseName: n === 'email' ? 'email address' : n }) } },
+      constructor: {
+        _meta: { getField: (n: string) => ({ verboseName: n === 'email' ? 'email address' : n }) },
+      },
     }
     expect(() => v.validate('testclient', user)).toThrow('too similar to the username')
     expect(() => v.validate('example.com', user)).toThrow('too similar to the email address')
     expect(() => v.validate('a completely different passphrase', user)).not.toThrow()
     expect(() => v.validate('testclient')).not.toThrow()
     expect(() => new UserAttributeSimilarityValidator({ maxSimilarity: 0.05 })).toThrow(RangeError)
-    expect(() => new UserAttributeSimilarityValidator({ maxSimilarity: 1 }).validate('testclient', user)).toThrow()
+    expect(() =>
+      new UserAttributeSimilarityValidator({ maxSimilarity: 1 }).validate('testclient', user),
+    ).toThrow()
   })
 
   it('validatePassword collects messages from AUTH_PASSWORD_VALIDATORS', async () => {

@@ -100,24 +100,29 @@ describe('makePassword / checkPassword', () => {
   })
 
   it('calls the setter when the preferred hasher or its parameters changed', async () => {
-    await runWithContext(bareContext({ PASSWORD_HASHERS: [new PBKDF2PasswordHasher({ iterations: 1000 }), ScryptPasswordHasher] }), async () => {
-      const setter = vi.fn()
-      expect(await checkPassword(PASSWORD, DJANGO_PBKDF2_100K, setter)).toBe(true)
-      expect(setter).toHaveBeenCalledWith(PASSWORD)
-      const current = await makePassword('pw')
-      expect(current.startsWith('pbkdf2_sha256$1000$')).toBe(true)
-      const setter2 = vi.fn()
-      expect(await checkPassword('pw', current, setter2)).toBe(true)
-      expect(setter2).not.toHaveBeenCalled()
-      // algorithm change → upgrade
-      const setter3 = vi.fn()
-      expect(await checkPassword(PASSWORD, DJANGO_SCRYPT, setter3)).toBe(true)
-      expect(setter3).toHaveBeenCalled()
-      // wrong password → no upgrade
-      const setter4 = vi.fn()
-      expect(await checkPassword('bad', DJANGO_PBKDF2_100K, setter4)).toBe(false)
-      expect(setter4).not.toHaveBeenCalled()
-    })
+    await runWithContext(
+      bareContext({
+        PASSWORD_HASHERS: [new PBKDF2PasswordHasher({ iterations: 1000 }), ScryptPasswordHasher],
+      }),
+      async () => {
+        const setter = vi.fn()
+        expect(await checkPassword(PASSWORD, DJANGO_PBKDF2_100K, setter)).toBe(true)
+        expect(setter).toHaveBeenCalledWith(PASSWORD)
+        const current = await makePassword('pw')
+        expect(current.startsWith('pbkdf2_sha256$1000$')).toBe(true)
+        const setter2 = vi.fn()
+        expect(await checkPassword('pw', current, setter2)).toBe(true)
+        expect(setter2).not.toHaveBeenCalled()
+        // algorithm change → upgrade
+        const setter3 = vi.fn()
+        expect(await checkPassword(PASSWORD, DJANGO_SCRYPT, setter3)).toBe(true)
+        expect(setter3).toHaveBeenCalled()
+        // wrong password → no upgrade
+        const setter4 = vi.fn()
+        expect(await checkPassword('bad', DJANGO_PBKDF2_100K, setter4)).toBe(false)
+        expect(setter4).not.toHaveBeenCalled()
+      },
+    )
   })
 
   it('PASSWORD_HASHERS accepts classes and subclasses with custom iterations', async () => {
