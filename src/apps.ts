@@ -32,7 +32,11 @@ function authModels(): Record<string, unknown> {
 
 /** Run createPermissions after `migrate` (ORM `postMigrate` signal, when the ORM provides it). */
 async function onPostMigrate(args: Record<string, any>): Promise<void> {
-  const appConfig = args.appConfig ?? args.app_config ?? args.app
+  const appConfig =
+    args.appConfig ??
+    args.app_config ??
+    args.app ??
+    (args.sender instanceof AppConfig ? args.sender : undefined)
   const using = args.using ?? args.database
   await createPermissions({ appConfig, using, verbosity: args.verbosity, stdout: args.stdout })
 }
