@@ -1,5 +1,6 @@
 // JSON Web Tokens (djangorestframework-simplejwt style) on `hono/jwt` (WebCrypto).
 import { apps, tryGetContext } from '@ghuri/core'
+import type { ModelClass } from '@ghuri/orm'
 import { decode as jwtDecode, sign as jwtSign, verify as jwtVerify } from 'hono/jwt'
 import { TokenError } from './errors'
 import type { AbstractBaseUser } from './models/auth'
@@ -132,6 +133,21 @@ export class JWTToken {
   /** Lifetime in seconds (from settings in subclasses). */
   static lifetime(): number {
     return jwtSettings().ACCESS_TOKEN_LIFETIME
+  }
+
+  /**
+   * The model whose key the `USER_ID_CLAIM` holds (default `AUTH_USER_MODEL`). Override in a token subclass with its
+   * own `tokenType` to issue tokens for another model, e.g. a shop's customers:
+   *
+   * ```ts
+   * class CustomerAccessToken extends AccessToken {
+   *   static override tokenType = 'customer_access'
+   *   static override userModel() { return Customer }
+   * }
+   * ```
+   */
+  static userModel(): ModelClass {
+    return getUserModel() as unknown as ModelClass
   }
 
   payload: JWTPayload
@@ -286,9 +302,12 @@ export class RefreshToken extends JWTToken {
     return jwtSettings().REFRESH_TOKEN_LIFETIME
   }
 
+  /** Access token class `accessToken` returns (override with a custom refresh token class). */
+  static accessTokenClass: typeof AccessToken = AccessToken
+
   /** A new access token carrying this refresh token's custom claims. */
   get accessToken(): AccessToken {
-    const access = new AccessToken()
+    const access = new (this.constructor as typeof RefreshToken).accessTokenClass()
     access.setExp({ fromTime: this.currentTime })
     const skip = NO_COPY_CLAIMS()
     for (const [k, v] of Object.entries(this.payload)) if (!skip.has(k)) access.payload[k] = v
@@ -318,10 +337,10 @@ export class RefreshToken extends JWTToken {
     if (existing) return existing
     const userId = this.payload[s.USER_ID_CLAIM]
     let user: unknown = null
-    if (userId !== undefined && userId !== null) {
-      user = await getUserModel()
-        ._defaultManager.filter({ [s.USER_ID_FIELD]: userId })
-        .first()
+    // OutstandingToken.user points to AUTH_USER_MODEL: tokens of another model are recorded without a user.
+    const model = (this.constructor as typeof JWTToken).userModel()
+    if (userId !== undefined && userId !== null && model === (getUserModel() as unknown)) {
+      user = await model._defaultManager.filter({ [s.USER_ID_FIELD]: userId }).first()
     }
     return OutstandingToken.objects.create({
       user: user as any,
@@ -347,7 +366,7 @@ export class RefreshToken extends JWTToken {
     ) => T,
     user: AbstractBaseUser,
   ): Promise<T> {
-    const t = (await JWTToken.forUser.call(RefreshToken as any, user)) as unknown as RefreshToken
+    const t = (await JWTToken.forUser.call(this as any, user)) as unknown as RefreshToken
     await t.outstand()
     return t as unknown as T
   }

@@ -244,8 +244,10 @@ export class JWTAuthentication implements BaseAuthentication {
     const s = jwtSettings()
     const userId = token.payload[s.USER_ID_CLAIM]
     if (userId === undefined) throw new InvalidToken('Token contained no recognizable user identification')
-    const User = getUserModel()
-    const user = await User._defaultManager.filter({ [s.USER_ID_FIELD]: userId }).first()
+    const User = (token.constructor as typeof JWTToken).userModel()
+    const user = (await User._defaultManager
+      .filter({ [s.USER_ID_FIELD]: userId })
+      .first()) as AbstractBaseUser | null
     if (!user) throw new AuthenticationFailed('User not found', 'user_not_found')
     if ((user as any).isActive === false) throw new AuthenticationFailed('User is inactive', 'user_inactive')
     if (
@@ -300,6 +302,9 @@ export const obtainAuthToken = ObtainAuthTokenView.asView()
 
 /** `POST {username, password}` → `{ refresh, access }`. */
 export class TokenObtainPairView extends TokenEndpoint {
+  /** Refresh token class issued (its `accessTokenClass` gives the access token). */
+  tokenClass: typeof RefreshToken = RefreshToken
+
   async post(c: Context): Promise<Response> {
     const User = getUserModel()
     const data = await readData(c)
@@ -316,7 +321,7 @@ export class TokenObtainPairView extends TokenEndpoint {
         'no_active_account',
       )
     }
-    const refresh = await RefreshToken.forUser(user)
+    const refresh = await this.tokenClass.forUser(user)
     if (jwtSettings().UPDATE_LAST_LOGIN && User._meta.getForwardField('lastLogin')) {
       ;(user as any).lastLogin = new Date()
       await user.save({ updateFields: ['lastLogin'] })
@@ -327,19 +332,23 @@ export class TokenObtainPairView extends TokenEndpoint {
 
 /** `POST {refresh}` → `{ access }` (+ a new `refresh` with `ROTATE_REFRESH_TOKENS`). */
 export class TokenRefreshView extends TokenEndpoint {
+  /** Refresh token class accepted (a token of another `tokenType` is rejected). */
+  tokenClass: typeof RefreshToken = RefreshToken
+
   async post(c: Context): Promise<Response> {
     const { refresh: raw } = await this.requireFields(c, 'refresh')
     const s = jwtSettings()
     let refresh: RefreshToken
     try {
-      refresh = await RefreshToken.fromString(raw)
+      refresh = await this.tokenClass.fromString(raw)
     } catch (err) {
       if (err instanceof TokenError) throw new InvalidToken(err.message)
       throw err
     }
     const userId = refresh.payload[s.USER_ID_CLAIM]
     if (userId !== undefined) {
-      const user = await getUserModel()
+      const user = await this.tokenClass
+        .userModel()
         ._defaultManager.filter({ [s.USER_ID_FIELD]: userId })
         .first()
       if (!user || (user as any).isActive === false) {
@@ -390,10 +399,13 @@ export class TokenVerifyView extends TokenEndpoint {
 
 /** `POST {refresh}` → blacklists it (logout for JWT; needs the `token_blacklist` app). */
 export class TokenBlacklistView extends TokenEndpoint {
+  /** Refresh token class accepted. */
+  tokenClass: typeof RefreshToken = RefreshToken
+
   async post(c: Context): Promise<Response> {
     const { refresh: raw } = await this.requireFields(c, 'refresh')
     try {
-      const refresh = await RefreshToken.fromString(raw)
+      const refresh = await this.tokenClass.fromString(raw)
       await refresh.blacklist()
     } catch (err) {
       if (err instanceof TokenError) throw new InvalidToken(err.message)
