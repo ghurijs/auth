@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.0-alpha.3
+
+- `obtainAuthToken` reports wrong credentials under `REST_FRAMEWORK.NON_FIELD_ERRORS_KEY` (default `nonFieldErrors`, like `@ghuri/rest`) instead of a hard-coded `non_field_errors`.
+- JSON `GET login/` docstring lists the full payload `{ isAuthenticated, csrfToken, user? }`.
+
 ## 0.1.0-alpha.2
 
 - Export `migrationsForUserModel(appLabel, migrationsModule)` so third-party apps with relations to the user model ship migrations that follow `AUTH_USER_MODEL` (Django's `swappable_dependency`).

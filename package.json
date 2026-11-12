@@ -1,6 +1,6 @@
 {
   "name": "@ghuri/auth",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Ghuri auth: users, groups, permissions, sessions, tokens, JWT",
   "type": "module",
   "license": "MIT",
