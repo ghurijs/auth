@@ -21,10 +21,15 @@ function modelsFor(appConfig?: AppConfig | string): ModelClass[] {
   )
 }
 
-/** Make sure every installed model has a ContentType row. Returns the content types by model. */
+/**
+ * Make sure every installed model has a ContentType row. Returns the content types by model.
+ * Clears the ContentType cache of the database first (like Django's `create_contenttypes`): after `flush`
+ * the cached rows no longer exist, and permissions created from them would violate the foreign key.
+ */
 export async function createContentTypes(
   opts: CreatePermissionsOptions = {},
 ): Promise<Map<ModelClass, ContentType>> {
+  ContentType.objects.clearCache(opts.using ?? 'default')
   const out = new Map<ModelClass, ContentType>()
   for (const model of modelsFor(opts.appConfig)) {
     out.set(model, await ContentType.objects.getForModel(model, { using: opts.using }))

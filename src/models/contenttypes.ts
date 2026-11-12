@@ -74,10 +74,17 @@ export class ContentTypeManager extends Manager<ContentType> {
     return this.get({ appLabel, model })
   }
 
-  /** Forget cached content types (call after flushing a test database). */
-  clearCache(): void {
-    const alias = 'default'
-    this.cacheFor(alias).clear()
+  /**
+   * Forget cached content types: of one database alias, or of every database when `using` is omitted.
+   * `createPermissions` (run on `postMigrate`, also after `flush`) clears the cache of its database first.
+   */
+  clearCache(using?: string): void {
+    if (using !== undefined) {
+      this.cacheFor(using).clear()
+      fallbackCache.get(using)?.clear()
+      return
+    }
+    this.cacheFor('default').clear()
     for (const m of fallbackCache.values()) m.clear()
     const dbs = tryGetContext()?.settings.DATABASES as Record<string, object> | undefined
     for (const config of Object.values(dbs ?? {})) caches.get(config)?.clear()

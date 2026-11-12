@@ -433,8 +433,9 @@ await client.login({ username: 'ann', password: 'pw' })   // true / false
 await client.logout()
 ```
 
-Use a fast hasher in tests: `PASSWORD_HASHERS: [new PBKDF2PasswordHasher({ iterations: 1000 })]`. After
-flushing a test database, call `ContentType.objects.clearCache()`.
+Use a fast hasher in tests: `PASSWORD_HASHERS: [new PBKDF2PasswordHasher({ iterations: 1000 })]`. A test
+database's `flush()` sends `postMigrate`, which recreates content types and permissions (and clears the
+`ContentType` cache of that database first); no manual `createPermissions()` / `clearCache()` is needed.
 
 ## Settings reference
 

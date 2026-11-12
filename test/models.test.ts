@@ -96,6 +96,8 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
   })
 
   it('createPermissions creates default + Meta permissions for every model, idempotently', async () => {
+    // flush() already recreated them (postMigrate): start from empty tables to see what it creates
+    await s.db.flush({ inhibitPostMigrate: true })
     const created = await createPermissions()
     expect(created).toBeGreaterThan(20)
     expect(await createPermissions()).toBe(0)
