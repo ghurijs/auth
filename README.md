@@ -326,13 +326,19 @@ const [token] = await Token.objects.getOrCreate({ user })
 JWT (simplejwt semantics, signed with `hono/jwt`, HS256 + `SECRET_KEY` by default):
 
 ```ts
-JWT: {
-  ACCESS_TOKEN_LIFETIME: 300,          // seconds
-  REFRESH_TOKEN_LIFETIME: 86400,
-  ROTATE_REFRESH_TOKENS: true,
-  BLACKLIST_AFTER_ROTATION: true,      // needs TokenBlacklistConfig
+JWT: {                                 // every key is optional; the values shown are the defaults
+  ACCESS_TOKEN_LIFETIME: 300,          // seconds (5 minutes)
+  REFRESH_TOKEN_LIFETIME: 86400,       // seconds (1 day)
+  ROTATE_REFRESH_TOKENS: false,        // true: /refresh also returns a new refresh token
+  BLACKLIST_AFTER_ROTATION: false,     // true: blacklist the old one (needs TokenBlacklistConfig)
+  UPDATE_LAST_LOGIN: false,
   ALGORITHM: 'HS256',                  // or RS256/ES256/EdDSA… with SIGNING_KEY / VERIFYING_KEY (PEM)
-  // AUDIENCE, ISSUER, LEEWAY, AUTH_HEADER_TYPES ['Bearer'], USER_ID_FIELD 'id', USER_ID_CLAIM 'user_id', …
+  SIGNING_KEY: SECRET_KEY,
+  LEEWAY: 0,
+  AUTH_HEADER_TYPES: ['Bearer'],
+  USER_ID_FIELD: 'id',
+  USER_ID_CLAIM: 'user_id',
+  // AUDIENCE, ISSUER (unset), TOKEN_TYPE_CLAIM 'token_type', JTI_CLAIM 'jti', CHECK_REVOKE_TOKEN false
 }
 ```
 
