@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.4
 
 - JWTs for a second model (a shop's customers) beside `AUTH_USER_MODEL`: `JWTToken.userModel()` names the model a
   token's `USER_ID_CLAIM` refers to, `RefreshToken.accessTokenClass` the access token it issues, and
