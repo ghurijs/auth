@@ -1,5 +1,4 @@
-import { AppConfig, apps, callCommand, include, path } from '@ghuri/core'
-import { BooleanField, CharField, EmailField, Model } from '@ghuri/orm'
+import { apps, callCommand, include, path } from '@ghuri/core'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   AuthConfig,
@@ -12,34 +11,12 @@ import {
   getUserModel,
   isUserModelSwapped,
   Permission,
-  PermissionsMixin,
   SessionsConfig,
   Token,
   User,
-  type UserManager,
 } from '../src/index'
+import { AccountsConfig, EmailUser } from './accounts/app'
 import { setupAuthApp } from './helpers'
-
-/** A custom user model logging in with its email address. */
-class EmailUser extends Model(
-  {
-    email: new EmailField({ unique: true, verboseName: 'email address' }),
-    fullName: new CharField({ maxLength: 100, blank: true, verboseName: 'full name' }),
-    isStaff: new BooleanField({ default: false }),
-    isActive: new BooleanField({ default: true }),
-  },
-  { extends: PermissionsMixin },
-) {
-  static USERNAME_FIELD = 'email'
-  static EMAIL_FIELD = 'email'
-  static REQUIRED_FIELDS = ['fullName']
-  declare static objects: UserManager<EmailUser>
-}
-
-class AccountsConfig extends AppConfig {
-  name = 'accounts'
-  models = { EmailUser }
-}
 
 describe('custom user model (AUTH_USER_MODEL = accounts.EmailUser)', () => {
   let s: Awaited<ReturnType<typeof setupAuthApp>>

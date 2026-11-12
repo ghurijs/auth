@@ -21,6 +21,14 @@ import { readData } from './views'
 
 export type AuthResult = [RequestUser, unknown] | null
 
+/** OpenAPI security scheme of an authentication class (read by `@ghuri/rest`'s schema generator). */
+export interface SecuritySchemeInfo {
+  /** Key in `components.securitySchemes`. */
+  name: string
+  /** The OpenAPI Security Scheme Object. */
+  scheme: Record<string, unknown>
+}
+
 /** What `@ghuri/rest` expects from an authentication class. */
 export interface BaseAuthentication {
   authenticate(c: Context): Promise<AuthResult>
@@ -38,6 +46,11 @@ function authorizationParts(c: Context): string[] {
  * methods (DRF's `SessionAuthentication`). Returns null for anonymous / inactive users.
  */
 export class SessionAuthentication implements BaseAuthentication {
+  static securityScheme: SecuritySchemeInfo = {
+    name: 'cookieAuth',
+    scheme: { type: 'apiKey', in: 'cookie', name: 'sessionid' },
+  }
+
   async authenticate(c: Context): Promise<AuthResult> {
     let user = c.get('user') as RequestUser | undefined
     if (!user && c.get('session')) {
@@ -58,6 +71,16 @@ export class SessionAuthentication implements BaseAuthentication {
 
 /** `Authorization: Token <key>` against the `authtoken.Token` model (DRF's `TokenAuthentication`). */
 export class TokenAuthentication implements BaseAuthentication {
+  static securityScheme: SecuritySchemeInfo = {
+    name: 'tokenAuth',
+    scheme: {
+      type: 'apiKey',
+      in: 'header',
+      name: 'Authorization',
+      description: 'Token-based authentication with required prefix "Token"',
+    },
+  }
+
   keyword = 'Token'
   /** Token model (override for custom token models). */
   model: { objects: any; DoesNotExist: new (...a: any[]) => Error } = Token
@@ -96,6 +119,8 @@ export class TokenAuthentication implements BaseAuthentication {
 
 /** `Authorization: Basic base64(user:pass)` (DRF's `BasicAuthentication`). */
 export class BasicAuthentication implements BaseAuthentication {
+  static securityScheme: SecuritySchemeInfo = { name: 'basicAuth', scheme: { type: 'http', scheme: 'basic' } }
+
   wwwAuthenticateRealm = 'api'
 
   async authenticate(c: Context): Promise<AuthResult> {
@@ -149,6 +174,11 @@ export class RemoteUserAuthentication implements BaseAuthentication {
 
 /** `Authorization: Bearer <access JWT>` (simplejwt's `JWTAuthentication`). */
 export class JWTAuthentication implements BaseAuthentication {
+  static securityScheme: SecuritySchemeInfo = {
+    name: 'jwtAuth',
+    scheme: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+  }
+
   wwwAuthenticateRealm = 'api'
   /** Token classes accepted (default access tokens). */
   tokenClasses: Array<typeof JWTToken> = [AccessToken]

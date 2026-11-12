@@ -230,3 +230,60 @@ describe('REST authentication', () => {
     expect(refresh.accessToken.payload.token_type).toBe('access')
   })
 })
+
+describe('OpenAPI security schemes', () => {
+  it('each authentication class declares a static securityScheme', () => {
+    expect(SessionAuthentication.securityScheme).toEqual({
+      name: 'cookieAuth',
+      scheme: { type: 'apiKey', in: 'cookie', name: 'sessionid' },
+    })
+    expect(TokenAuthentication.securityScheme).toEqual({
+      name: 'tokenAuth',
+      scheme: {
+        type: 'apiKey',
+        in: 'header',
+        name: 'Authorization',
+        description: 'Token-based authentication with required prefix "Token"',
+      },
+    })
+    expect(JWTAuthentication.securityScheme).toEqual({
+      name: 'jwtAuth',
+      scheme: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+    })
+    expect(BasicAuthentication.securityScheme).toEqual({
+      name: 'basicAuth',
+      scheme: { type: 'http', scheme: 'basic' },
+    })
+  })
+
+  it("@ghuri/rest's OpenAPI generator picks them up", async () => {
+    const { APIView, AllowAny, generateSchema } = await import('@ghuri/rest')
+    class MeView extends APIView {
+      override authenticationClasses = [
+        SessionAuthentication,
+        TokenAuthentication,
+        JWTAuthentication,
+        BasicAuthentication,
+      ]
+      override permissionClasses = [AllowAny]
+      async get() {
+        return { ok: true }
+      }
+    }
+    const doc = generateSchema([path('me/', MeView.asView())]) as any
+    expect(Object.keys(doc.components.securitySchemes).sort()).toEqual([
+      'basicAuth',
+      'cookieAuth',
+      'jwtAuth',
+      'tokenAuth',
+    ])
+    expect(doc.components.securitySchemes.jwtAuth).toEqual(JWTAuthentication.securityScheme.scheme)
+    expect(doc.paths['/me/'].get.security).toEqual([
+      { cookieAuth: [] },
+      { tokenAuth: [] },
+      { jwtAuth: [] },
+      { basicAuth: [] },
+      {},
+    ])
+  })
+})
