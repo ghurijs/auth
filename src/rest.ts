@@ -1,7 +1,16 @@
 // @ghuri/auth/rest — DRF-style authentication classes and token views. Structural: no import of @ghuri/rest.
 // REST contract: `new Cls()` then `authenticate(c): Promise<[RequestUser, unknown] | null>` and
 // `authenticateHeader?(c): string | undefined`.
-import { enforceCsrf, getUser, json, type RequestUser, setUser, ValidationError, View } from '@ghuri/core'
+import {
+  enforceCsrf,
+  getUser,
+  json,
+  type RequestUser,
+  setUser,
+  tryGetContext,
+  ValidationError,
+  View,
+} from '@ghuri/core'
 import type { Context } from 'hono'
 import { authenticate, getUserFromSession } from './auth'
 import { AuthenticationFailed, InvalidToken, TokenError } from './errors'
@@ -20,6 +29,12 @@ import { b64decode, fromUtf8 } from './utils/crypto'
 import { readData } from './views'
 
 export type AuthResult = [RequestUser, unknown] | null
+
+/** `REST_FRAMEWORK.NON_FIELD_ERRORS_KEY` (read structurally; `@ghuri/rest`'s default is `'nonFieldErrors'`). */
+function nonFieldErrorsKey(): string {
+  const rest = tryGetContext()?.settings.REST_FRAMEWORK as { NON_FIELD_ERRORS_KEY?: unknown } | undefined
+  return typeof rest?.NON_FIELD_ERRORS_KEY === 'string' ? rest.NON_FIELD_ERRORS_KEY : 'nonFieldErrors'
+}
 
 /** OpenAPI security scheme of an authentication class (read by `@ghuri/rest`'s schema generator). */
 export interface SecuritySchemeInfo {
@@ -275,7 +290,7 @@ export class ObtainAuthTokenView extends TokenEndpoint {
     if (!password) errors.password = ['This field is required.']
     if (Object.keys(errors).length) return json(c, errors, 400)
     const user = await authenticate(c, { username, password })
-    if (!user) return json(c, { non_field_errors: ['Unable to log in with provided credentials.'] }, 400)
+    if (!user) return json(c, { [nonFieldErrorsKey()]: ['Unable to log in with provided credentials.'] }, 400)
     const [token] = await Token.objects.getOrCreate({ user: user as any })
     return json(c, { token: token.key })
   }

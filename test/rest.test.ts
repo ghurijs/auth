@@ -77,7 +77,16 @@ describe('REST authentication', () => {
   it('obtainAuthToken + TokenAuthentication', async () => {
     const bad = await s.client.post('/api/auth-token/', { json: { username: 'ann', password: 'x' } })
     expect(bad.status).toBe(400)
-    expect(await bad.json()).toEqual({ non_field_errors: ['Unable to log in with provided credentials.'] })
+    expect(await bad.json()).toEqual({ nonFieldErrors: ['Unable to log in with provided credentials.'] })
+    // REST_FRAMEWORK.NON_FIELD_ERRORS_KEY is honoured (DRF's 'non_field_errors' for DRF clients)
+    const settings = s.ctx.settings as Record<string, unknown>
+    settings.REST_FRAMEWORK = { NON_FIELD_ERRORS_KEY: 'non_field_errors' }
+    try {
+      const drf = await s.client.post('/api/auth-token/', { json: { username: 'ann', password: 'x' } })
+      expect(await drf.json()).toEqual({ non_field_errors: ['Unable to log in with provided credentials.'] })
+    } finally {
+      delete settings.REST_FRAMEWORK
+    }
     const missing = await s.client.post('/api/auth-token/', { json: {} })
     expect(await missing.json()).toEqual({
       username: ['This field is required.'],

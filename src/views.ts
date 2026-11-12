@@ -97,7 +97,7 @@ function loginPage(c: Context, error?: string, status = 200): Response {
 
 /**
  * `POST {username, password}` (JSON or form) → logs in. JSON clients get `{ user }`; forms are redirected
- * to `next` or `LOGIN_REDIRECT_URL`. `GET` returns `{ csrfToken, isAuthenticated }` (JSON) or a minimal form.
+ * to `next` or `LOGIN_REDIRECT_URL`. `GET` returns `{ isAuthenticated, csrfToken, user? }` (JSON) or a minimal form.
  */
 export class LoginView extends View {
   /** Where to go after login when no safe `next` is given (default `LOGIN_REDIRECT_URL`). */
