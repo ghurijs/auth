@@ -1,5 +1,6 @@
 // App configs: contenttypes, auth, sessions, authtoken, token_blacklist.
-import { AppConfig, apps, checks, ImproperlyConfigured, tryGetContext } from '@ghuri/core'
+import * as core from '@ghuri/core'
+import { AppConfig, apps, checks, ImproperlyConfigured, type RequestUser, tryGetContext } from '@ghuri/core'
 import * as orm from '@ghuri/orm'
 import * as authMigrations from './auth/migrations/index'
 import * as authtokenMigrations from './authtoken/migrations/index'
@@ -20,7 +21,7 @@ import { createPermissions } from './permissions'
 import * as sessionsMigrations from './sessions/migrations/index'
 import { migrationsForUserModel } from './swappable'
 import * as tokenBlacklistMigrations from './token_blacklist/migrations/index'
-import { DEFAULT_USER_MODEL, isUserModelSwapped } from './user-model'
+import { DEFAULT_USER_MODEL, getUserModel, isUserModelSwapped } from './user-model'
 
 /**
  * `AppConfig.path` of a bundled app: `src/<app>` when running from the TypeScript sources (the CLI,
@@ -70,6 +71,18 @@ async function onPostMigrate(args: Record<string, any>): Promise<void> {
   await createPermissions({ appConfig, using, verbosity: args.verbosity, stdout: args.stdout })
 }
 
+/** Core's user loader (`loadUser(pk)`): used by code that only kept a pk, like WebSocket consumers. */
+async function loadUserByPk(pk: unknown): Promise<RequestUser | null> {
+  const User = getUserModel()
+  let value: unknown
+  try {
+    value = User._meta.pk.toPython(pk)
+  } catch {
+    return null
+  }
+  return ((await User.objects.filter({ pk: value }).first()) as RequestUser | null) ?? null
+}
+
 /**
  * `auth` app: `User` (unless `AUTH_USER_MODEL` swaps it), `Group`, `Permission`; commands
  * `createsuperuser` and `changepassword`. Requires `ContentTypesConfig`.
@@ -94,6 +107,9 @@ export class AuthConfig extends AppConfig {
       postMigrate.connect(onPostMigrate, { uid: 'ghuri.auth.createPermissions' })
     }
     checks.register(checkUserModel)
+    // Older @ghuri/core releases have no user loader; skip quietly there.
+    const register = (core as Record<string, any>).registerUserLoader
+    if (typeof register === 'function') register(loadUserByPk)
   }
 }
 

@@ -1,4 +1,4 @@
-import { apps, runChecks } from '@ghuri/core'
+import { apps, loadUser, runChecks } from '@ghuri/core'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import {
   AllowAllUsersModelBackend,
@@ -55,6 +55,16 @@ describe.each(['sqlite', 'pglite'] as const)('models, permissions and backends (
     ])
     expect(getUserModel()).toBe(User)
     expect(apps.isInstalled('authtoken')).toBe(true)
+  })
+
+  it('registers core loadUser(pk)', async () => {
+    const u = await User.objects.createUser('loader', 'l@example.com', 'pw')
+    const loaded = await loadUser(u.pk)
+    expect(loaded).toBeInstanceOf(User)
+    expect((loaded as User).username).toBe('loader')
+    expect(await loadUser(String(u.pk))).toBeInstanceOf(User)
+    expect(await loadUser(999_999)).toBeNull()
+    expect(await loadUser('not-a-number')).toBeNull()
   })
 
   it('createUser / createSuperuser / password helpers', async () => {
