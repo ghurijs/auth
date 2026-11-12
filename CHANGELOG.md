@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0-alpha.2
+
+- Export `migrationsForUserModel(appLabel, migrationsModule)` so third-party apps with relations to the user model ship migrations that follow `AUTH_USER_MODEL` (Django's `swappable_dependency`).
+
 ## 0.1.0-alpha.1
 
 - `AuthConfig.ready()` registers core's user loader (`loadUser(pk)` → the `AUTH_USER_MODEL` instance or `null`), when the installed `@ghuri/core` provides `registerUserLoader`.

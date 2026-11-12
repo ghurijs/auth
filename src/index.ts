@@ -169,6 +169,7 @@ export {
   signing,
   TimestampSigner,
 } from './signing'
+export { migrationsForUserModel } from './swappable'
 export { defaultTokenGenerator, PasswordResetTokenGenerator } from './tokens'
 export { DEFAULT_USER_MODEL, getUserModel, getUserModelLabel, isUserModelSwapped } from './user-model'
 export {
