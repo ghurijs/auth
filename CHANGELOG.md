@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- JWTs for a second model (a shop's customers) beside `AUTH_USER_MODEL`: `JWTToken.userModel()` names the model a
+  token's `USER_ID_CLAIM` refers to, `RefreshToken.accessTokenClass` the access token it issues, and
+  `TokenObtainPairView` / `TokenRefreshView` / `TokenBlacklistView` take a `tokenClass`. `JWTAuthentication` looks the
+  user up in the token class's model. Give each kind its own `tokenType` so one is never accepted for the other.
+- Fix: `RefreshToken.forUser()` on a subclass returned a plain `RefreshToken` (custom token types and claims were lost).
+- Outstanding tokens of a model other than `AUTH_USER_MODEL` are recorded without a user instead of being linked to
+  the `AUTH_USER_MODEL` user with the same id.
+
 ## 0.1.0-alpha.3
 
 - `obtainAuthToken` reports wrong credentials under `REST_FRAMEWORK.NON_FIELD_ERRORS_KEY` (default `nonFieldErrors`, like `@ghuri/rest`) instead of a hard-coded `non_field_errors`.
