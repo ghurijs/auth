@@ -1,6 +1,6 @@
 {
   "name": "@ghuri/auth",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "Ghuri auth: users, groups, permissions, sessions, tokens, JWT",
   "type": "module",
   "license": "MIT",
@@ -70,7 +70,7 @@
     "vitest": "^5.1.0",
     "@biomejs/biome": "^2.6.6",
     "@types/node": "^24.0.0",
-    "@ghuri/core": "^0.1.0-alpha.0",
+    "@ghuri/core": "^0.1.0-alpha.1",
     "@ghuri/orm": "^0.1.0-alpha.0",
     "@ghuri/rest": "^0.1.0-alpha.0",
     "hono": "^4.13.0",

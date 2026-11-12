@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.1
 
 - `AuthConfig.ready()` registers core's user loader (`loadUser(pk)` → the `AUTH_USER_MODEL` instance or `null`), when the installed `@ghuri/core` provides `registerUserLoader`.
 - Fix: permissions were missing after flushing a test database. `createContentTypes()` / `createPermissions()` (the `postMigrate` handler) now clear the `ContentType` cache of their database first, like Django's `create_contenttypes`: cached rows deleted by `flush` produced permissions with a dangling content type id (foreign key violation). Together with `@ghuri/orm`'s `TestDatabase.flush()` now sending `postMigrate`, permissions are recreated after every flush. `ContentType.objects.clearCache(using?)` takes an optional alias.
